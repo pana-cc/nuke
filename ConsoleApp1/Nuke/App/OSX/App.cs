@@ -3,6 +3,8 @@ using System.Runtime.InteropServices;
 
 using static Nuke.App.OSX.CoreFoundation;
 
+[assembly: System.Reflection.Metadata.MetadataUpdateHandler(typeof(Nuke.App.OSX.App))]
+
 namespace Nuke.App.OSX;
 
 public class App
@@ -15,6 +17,8 @@ public class App
 
     private nint NSAppRef;
 
+    public static App? Instance { get; private set; }
+
     private static bool applicationShouldTerminate(IntPtr self, IntPtr sel, IntPtr sender)
     {
         return true;
@@ -22,6 +26,12 @@ public class App
 
     public App()
     {
+        if (App.Instance != null)
+        {
+            throw new Exception("There may be only one instance of an App.");
+        }
+
+        App.Instance = this;
     }
 
     public void Main(Action run)
@@ -54,5 +64,24 @@ public class App
         run();
 
         objc_msgSend_retIntPtr(this.NSAppRef, SEL("run"));
+    }
+
+    private void UpdateApplicationInstance(Type[]? types)
+    {
+        // Schedule a "Hot Reload" event update throughout the application.
+    }
+
+    private void ClearCacheInstance(Type[]? types)
+    {
+    }
+
+    public static void UpdateApplication(Type[]? types)
+    {
+        App.Instance?.UpdateApplicationInstance(types);
+    }
+
+    public static void ClearCache(Type[]? types)
+    {
+        App.Instance?.ClearCacheInstance(types);
     }
 }
